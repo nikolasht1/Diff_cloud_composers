@@ -1,0 +1,49 @@
+services:
+  # The Database
+  db:
+    image: mariadb:10.11
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=server_admin_password
+      - MYSQL_PASSWORD=nextcloud_db_password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  # The Nextcloud Application Server
+  nextcloud:
+    image: nextcloud:stable
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PASSWORD=nextcloud_db_password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    depends_on:
+      - db
+
+  # The Standalone Web Office Editing Engine
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=your_secure_random_jwt_token_here
+    volumes:
+      - onlyoffice_data:/var/lib/onlyoffice
+      - onlyoffice_log:/var/log/onlyoffice
+
+volumes:
+  db_data:
+  nextcloud_data:
+  onlyoffice_data:
+  onlyoffice_log:
+
